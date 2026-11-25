@@ -125,3 +125,15 @@ func TestHasToolErrorOutput(t *testing.T) {
 		}
 	}
 }
+
+func TestIsGivingUpOrManualFallback(t *testing.T) {
+	if !IsActionRequest("terminalo de una vez") {
+		t.Errorf("se esperaba true para 'terminalo de una vez'")
+	}
+	if !IsGivingUpOrManualFallback("Es necesario exportar las cookies de sesion autenticadas desde el navegador personal.") {
+		t.Errorf("se esperaba deteccion de delegacion manual")
+	}
+	if IsGivingUpOrManualFallback("Se sincronizaron 42 miembros en church_directory.db.") {
+		t.Errorf("no se esperaba falso positivo en respuesta exitosa")
+	}
+}

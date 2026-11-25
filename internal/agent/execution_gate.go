@@ -11,7 +11,7 @@ var affirmativePatterns = []*regexp.Regexp{
 }
 
 var executionCommandVerbs = []*regexp.Regexp{
-	regexp.MustCompile(`(?i)\b(ejecuta|ejecutar|ejecutalo|proba|probar|crea|crear|hace|hacer|hacelo|compila|compilar|instala|instalar|corre|correr|testea|testear|actualiza|actualizar|inicializa|inicializar|inicia|iniciar|borra|borrar|elimina|eliminar|reinicia|reiniciar|saca|sacar|sacalo|pone|poner|ponelo|cambia|cambiar|cambialo|reemplaza|reemplazar|reemplazalo|quita|quitar|quitalo|subi|subir|agrega|agregar|corregi|corregir|arregla|arreglar|desplega|desplegar|verifica|verificar|revisa|revisar|chequea|chequear)\b`),
+	regexp.MustCompile(`(?i)\b(ejecuta|ejecutar|ejecutalo|proba|probar|crea|crear|hace|hacer|hacelo|compila|compilar|instala|instalar|corre|correr|testea|testear|actualiza|actualizar|inicializa|inicializar|inicia|iniciar|borra|borrar|elimina|eliminar|reinicia|reiniciar|saca|sacar|sacalo|pone|poner|ponelo|cambia|cambiar|cambialo|reemplaza|reemplazar|reemplazalo|quita|quitar|quitalo|subi|subir|agrega|agregar|corregi|corregir|arregla|arreglar|desplega|desplegar|verifica|verificar|revisa|revisar|chequea|chequear|termina|terminar|terminalo|completa|completar|completalo|resuelve|resolver|resolvelo)\b`),
 	regexp.MustCompile(`(?i)^\s*(run|create|build|install|test|update|start|stop|restart|delete|remove|fix|check|verify|deploy|inspect|edit)\b`),
 }
 
@@ -39,6 +39,10 @@ var shellBlockPattern = regexp.MustCompile("(?s)^```(?:bash|sh|zsh|shell)?\\s*\n
 
 var placeholderReplyPatterns = []*regexp.Regexp{
 	regexp.MustCompile(`(?i)^(task ready|ready|done|ok\.?|processing\.{0,3})$`),
+}
+
+var manualFallbackPatterns = []*regexp.Regexp{
+	regexp.MustCompile(`(?i)\b(exportar las cookies|iniciar sesion manualmente|inicio de sesion manual|desde el navegador personal|desde tu navegador|desde tu computadora personal|no es posible automatizar|manualmente desde|necesario que ingreses manualmente|intervencion humana|cookies de sesion|storage_state\.json|you need to manually|manual login required)\b`),
 }
 
 var toolErrorMarkers = []string{
@@ -141,6 +145,20 @@ func IsDelegatingShellOrPlaceholder(reply string) bool {
 	}
 	norm := normalizeLower(trimmed)
 	for _, p := range placeholderReplyPatterns {
+		if p.MatchString(norm) {
+			return true
+		}
+	}
+	return false
+}
+
+// IsGivingUpOrManualFallback detecta si el modelo se rinde delegando pasos manuales al usuario.
+func IsGivingUpOrManualFallback(reply string) bool {
+	norm := normalizeLower(strings.TrimSpace(reply))
+	if norm == "" {
+		return false
+	}
+	for _, p := range manualFallbackPatterns {
 		if p.MatchString(norm) {
 			return true
 		}

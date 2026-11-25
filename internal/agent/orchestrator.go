@@ -70,6 +70,7 @@ func (o *ReActOrchestrator) Run(ctx context.Context, sessionID, userInput, extra
 	modifyingToolsExecuted := 0
 	lastToolHadError := false
 	lastToolErrorSample := ""
+	manualFallbackBlocked := false
 	var toolTrace []string
 
 	maxIters := o.cfg.MaxIterations
@@ -223,6 +224,17 @@ func (o *ReActOrchestrator) Run(ctx context.Context, sessionID, userInput, extra
 					})
 					continue
 				}
+			}
+
+			if iter < maxIters-2 && len(schemas) > 0 && isActionReq && !manualFallbackBlocked && IsGivingUpOrManualFallback(finalReply) {
+				manualFallbackBlocked = true
+				log.Printf("[Execution Gate] Bloqueada rendicion o delegacion manual en iter %d. Exigiendo diagnostico tecnico real...", iter)
+				conversation = append(conversation, OpenAIMessage{
+					Role:    "user",
+					Content: "[DIRECTIVA CRITICA - NO DELEGAR PASOS MANUALES]: No te rindas ni pidas al usuario acciones manuales (como exportar cookies o navegar manualmente) sin antes inspeccionar las respuestas reales de red/API, el HTML/DOM completo, o probar estrategias tecnicas alternativas con tus herramientas.",
+				})
+				forceToolsNextIter = true
+				continue
 			}
 
 			finalReply = cleanFormatting(finalReply)
